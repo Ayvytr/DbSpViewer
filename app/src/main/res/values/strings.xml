@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">DbSpViewer</string>
+    <string name="no_root_permission">系统没有Root，恐怕不能正常使用啦！</string>
+    <string name="get_root_permission_failed">获取Root权限失败！</string>
+</resources>
