@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="select_which">
+        <item>@string/sp</item>
+        <item>@string/db</item>
+    </string-array>
+</resources>
