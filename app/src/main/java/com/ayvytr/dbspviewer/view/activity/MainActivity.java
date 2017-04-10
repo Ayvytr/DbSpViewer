@@ -242,7 +242,7 @@ public class MainActivity extends AppCompatActivity
         String dbPath = getDbPath(appInfo.packageName);
         Root.requestReadPermission(dbPath);
         final File[] files = FileTool.listFilesDislikeNamesNoCase(dbPath, "-journal");
-        if(files.length == 0)
+        if(files == null || files.length == 0)
         {
             ToastTool.show(R.string.no_databases);
             return;
