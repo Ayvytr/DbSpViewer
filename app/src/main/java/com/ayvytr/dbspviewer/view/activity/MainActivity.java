@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity
     {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.addItemDecoration(
-                new DividerItemDecoration(this, DividerItemDecoration.HORIZONTAL));
+                new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         appAdapter = new AppAdapter();
         recyclerView.setAdapter(appAdapter);
         appAdapter.update();

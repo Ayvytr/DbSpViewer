@@ -92,6 +92,7 @@ public class DatabaseActivity extends AppCompatActivity
     {
         maxItemWidth = DensityTool.dp2px(200);
         screenWidth = ScreenTool.getScreenWidth();
+        setTitle(R.string.db);
 
         createSnackBar();
 
@@ -181,6 +182,7 @@ public class DatabaseActivity extends AppCompatActivity
                                 currentTable = tables.get(which);
                                 currentTableIndex = which;
                                 dbItemAdapter.update();
+                                setTitle(currentTable);
                                 return true;
                             }
                         }).show();
@@ -379,9 +381,9 @@ public class DatabaseActivity extends AppCompatActivity
                 this.view = (ViewGroup) view;
             }
 
-            public void update(int position)
+            public void update(final int position)
             {
-                DbItem dbItem = list.get(position);
+                final DbItem dbItem = list.get(position);
                 view.removeAllViews();
                 view.setMinimumWidth(screenWidth);
 
@@ -415,6 +417,7 @@ public class DatabaseActivity extends AppCompatActivity
                 }
 
                 stickyRecyclerHeadersDecoration.invalidateHeaders();
+
             }
         }
 
