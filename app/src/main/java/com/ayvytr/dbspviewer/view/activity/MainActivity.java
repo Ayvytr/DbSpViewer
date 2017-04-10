@@ -1,9 +1,11 @@
-package com.ayvytr.dbspviewer;
+package com.ayvytr.dbspviewer.view.activity;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,14 +15,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.ayvytr.easyandroidlibrary.Easy;
-import com.ayvytr.easyandroidlibrary.bean.AppInfo;
-import com.ayvytr.easyandroidlibrary.tools.withcontext.Packages;
-import com.ayvytr.easyandroidlibrary.tools.withcontext.ToastTool;
-import com.ayvytr.logger.L;
+import com.ayvytr.dbspviewer.R;
+import com.ayvytr.dbspviewer.utils.Root;
+import com.ayvytr.easyandroid.Easy;
+import com.ayvytr.easyandroid.bean.AppInfo;
+import com.ayvytr.easyandroid.tools.FileTool;
+import com.ayvytr.easyandroid.tools.withcontext.Packages;
+import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
 import com.chrisplus.rootmanager.RootManager;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import butterknife.BindView;
@@ -35,13 +43,13 @@ import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity
 {
+    public static final String EXTRA_DB_FILEPATH = "extra_db_filepath";
+
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
     @BindView(R.id.refreshLayout)
     SwipeRefreshLayout refreshLayout;
     private AppAdapter appAdapter;
-
-    public static final String EXTRA_BROWSE_DB = "browse_db";
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -73,6 +81,8 @@ public class MainActivity extends AppCompatActivity
     private void initView()
     {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.addItemDecoration(
+                new DividerItemDecoration(this, DividerItemDecoration.HORIZONTAL));
         appAdapter = new AppAdapter();
         recyclerView.setAdapter(appAdapter);
         appAdapter.update();
@@ -138,8 +148,15 @@ public class MainActivity extends AppCompatActivity
                           @Override
                           public void onNext(List<AppInfo> value)
                           {
-                              L.e(Thread.currentThread().getName());
                               list.addAll(value);
+                              Collections.sort(list, new Comparator<AppInfo>()
+                              {
+                                  @Override
+                                  public int compare(AppInfo o1, AppInfo o2)
+                                  {
+                                      return o1.label.compareTo(o2.label);
+                                  }
+                              });
                           }
 
                           @Override
@@ -178,7 +195,7 @@ public class MainActivity extends AppCompatActivity
             {
                 final AppInfo appInfo = list.get(position);
                 tvTitle.setText(appInfo.label);
-                iv.setImageDrawable(appInfo.icon);
+                iv.setImageBitmap(appInfo.icon);
                 tvPackageName.setText(appInfo.packageName);
 
                 view.setOnClickListener(new View.OnClickListener()
@@ -222,50 +239,39 @@ public class MainActivity extends AppCompatActivity
 
     private void showSelectDbDialog(AppInfo appInfo)
     {
-        Observable.create(new ObservableOnSubscribe<List<AppInfo>>()
+        String dbPath = getDbPath(appInfo.packageName);
+        Root.requestReadPermission(dbPath);
+        final File[] files = FileTool.listFilesDislikeNamesNoCase(dbPath, "-journal");
+        if(files.length == 0)
         {
-            @Override
-            public void subscribe(ObservableEmitter<List<AppInfo>> e) throws Exception
-            {
+            ToastTool.show(R.string.no_databases);
+            return;
+        }
 
-                e.onNext(Packages.getInstalledAppsInfo());
-                e.onComplete();
-            }
-        }).observeOn(AndroidSchedulers.mainThread()).subscribeOn(Schedulers.io())
-                  .subscribe(new Observer<List<AppInfo>>()
-                  {
-                      @Override
-                      public void onSubscribe(Disposable d)
-                      {
-                      }
-
-                      @Override
-                      public void onNext(List<AppInfo> value)
-                      {
-                      }
-
-                      @Override
-                      public void onError(Throwable e)
-                      {
-
-                      }
-
-                      @Override
-                      public void onComplete()
-                      {
-                      }
-                  });
+        final String[] names = FileTool.toFileNames(files);
+        Arrays.sort(files);
+        Arrays.sort(names);
         new MaterialDialog.Builder(this)
                 .title(R.string.select_db)
-                .items()
+                .items(names)
                 .alwaysCallSingleChoiceCallback()
-                .itemsCallbackSingleChoice(0, new MaterialDialog.ListCallbackSingleChoice() {
+                .itemsCallbackSingleChoice(0, new MaterialDialog.ListCallbackSingleChoice()
+                {
                     @Override
                     public boolean onSelection(MaterialDialog dialog, View itemView, int which,
                                                CharSequence text)
                     {
+                        Intent intent = new Intent(MainActivity.this, DatabaseActivity.class);
+                        String path = files[which].getAbsolutePath();
+                        intent.putExtra(EXTRA_DB_FILEPATH, path);
+                        startActivity(intent);
                         return true;
                     }
                 }).show();
+    }
+
+    private String getDbPath(String packageName)
+    {
+        return "/data/data/" + packageName + "/databases";
     }
 }
