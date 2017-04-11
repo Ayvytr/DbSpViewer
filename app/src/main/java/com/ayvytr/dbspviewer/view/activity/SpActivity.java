@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.ayvytr.dbspviewer.R;
 import com.ayvytr.dbspviewer.bean.SpItem;
+import com.ayvytr.dbspviewer.utils.Path;
 import com.ayvytr.dbspviewer.utils.Root;
 import com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView;
 import com.ayvytr.dbspviewer.view.custom.CustomTextView;
@@ -45,6 +46,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
+import static com.ayvytr.dbspviewer.view.activity.MainActivity.EXTRA_SP_APP_INFO;
+
 public class SpActivity extends AppCompatActivity
 {
     @BindView(R.id.recyclerView)
@@ -60,6 +63,8 @@ public class SpActivity extends AppCompatActivity
 
     private List<SpItem> list = new ArrayList<>();
     private Snackbar snackbar;
+    private SpItem headerItem;
+    private boolean isAddedDecoration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -72,7 +77,9 @@ public class SpActivity extends AppCompatActivity
 
     private void init()
     {
-        appInfo = getIntent().getParcelableExtra(MainActivity.EXTRA_SP_APP_INFO);
+        headerItem = new SpItem(getString(R.string.type), getString(R.string.key),
+                getString(R.string.value));
+        appInfo = getIntent().getParcelableExtra(EXTRA_SP_APP_INFO);
         initView();
         selectSpFile();
     }
@@ -85,7 +92,7 @@ public class SpActivity extends AppCompatActivity
         spItemAdapter = new SpItemAdapter();
         recyclerView.setAdapter(spItemAdapter);
         stickyRecyclerHeadersDecoration = new StickyRecyclerHeadersDecoration(spItemAdapter);
-        recyclerView.addItemDecoration(stickyRecyclerHeadersDecoration);
+        addItemDecoration();
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener()
         {
             @Override
@@ -97,12 +104,23 @@ public class SpActivity extends AppCompatActivity
         createSnackBar();
     }
 
+    @Override
+    protected void onDestroy()
+    {
+        if(currentSp != null)
+        {
+            Root.cancelReadPermission(currentSp.getAbsolutePath());
+        }
+        list.clear();
+        super.onDestroy();
+    }
+
     private void createSnackBar()
     {
         snackbar = Snackbar
                 .make(getWindow().getDecorView(), Convert.toString(list.size()) + "条数据",
                         Snackbar.LENGTH_LONG);
-        snackbar.setAction(R.string.close, new View.OnClickListener()
+        snackbar.setAction(R.string.confirm, new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
@@ -114,7 +132,7 @@ public class SpActivity extends AppCompatActivity
 
     private void selectSpFile()
     {
-        String spPath = getSpPath(appInfo.packageName);
+        String spPath = Path.getSpPath(appInfo.packageName);
         Root.requestReadPermission(spPath);
 
         final File[] files = FileTool.listFiles(spPath);
@@ -166,13 +184,53 @@ public class SpActivity extends AppCompatActivity
             case R.id.menu_id_show_count:
                 showItemCount();
                 return true;
+            case R.id.menu_id_seek:
+                seekListItem();
+                break;
+            case R.id.menu_id_fast_seek:
+                fastSeek();
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private String getSpPath(String packageName)
+    private void fastSeek()
     {
-        return "/data/data/" + packageName + "/shared_prefs";
+        MainActivity.showSelectDbDialog(this, appInfo);
+    }
+
+    private void seekListItem()
+    {
+        if(list.isEmpty())
+        {
+            showNoItemMsg();
+            return;
+        }
+        ArrayList<Integer> items = new ArrayList<>();
+        for(int i = 0; i < list.size(); i++)
+        {
+            items.add(i + 1);
+        }
+        new MaterialDialog.Builder(this)
+                .title(R.string.seek_item)
+                .items(items)
+                .alwaysCallSingleChoiceCallback()
+                .itemsCallbackSingleChoice(0, new MaterialDialog.ListCallbackSingleChoice()
+                {
+                    @Override
+                    public boolean onSelection(MaterialDialog dialog, View itemView, int which,
+                                               CharSequence text)
+                    {
+                        recyclerView.scrollToPosition(which);
+                        return true;
+                    }
+                }).show();
+    }
+
+    private void showNoItemMsg()
+    {
+        snackbar.setText(R.string.no_db_items);
+        snackbar.show();
     }
 
     public class SpItemAdapter extends RecyclerView.Adapter<SpItemAdapter.Vh>
@@ -245,8 +303,8 @@ public class SpActivity extends AppCompatActivity
                           @Override
                           public void onNext(List<SpItem> value)
                           {
+                              checkItemDecoration();
                               notifyDataSetChanged();
-                              refreshLayout.setRefreshing(false);
                           }
 
                           @Override
@@ -258,6 +316,7 @@ public class SpActivity extends AppCompatActivity
                           public void onComplete()
                           {
                               showItemCount();
+                              refreshLayout.setRefreshing(false);
                           }
                       });
         }
@@ -282,8 +341,15 @@ public class SpActivity extends AppCompatActivity
             public void bind(int position)
             {
                 SpItem spItem = list.get(position);
+                if(spItem == headerItem)
+                {
+                    tvIndex.setText(R.string.index);
+                }
+                else
+                {
+                    tvIndex.setText(Convert.toString(position + 1));
+                }
 
-                tvIndex.setText(Convert.toString(position + 1));
                 tvType.setText(spItem.type);
                 tvKey.setText(spItem.key);
                 tvValue.setText(spItem.value);
@@ -312,24 +378,58 @@ public class SpActivity extends AppCompatActivity
             public void bind()
             {
                 tvIndex.setText(R.string.index);
-                tvType.setText(R.string.type);
-                tvKey.setText(R.string.key);
-                tvValue.setText(R.string.value);
+                tvType.setText(headerItem.type);
+                tvKey.setText(headerItem.key);
+                tvValue.setText(headerItem.value);
             }
+        }
+    }
+
+    private void checkItemDecoration()
+    {
+        if(list.isEmpty())
+        {
+            list.add(headerItem);
+            removeItemDecoration();
+        }
+        else
+        {
+            addItemDecoration();
         }
     }
 
     private void showItemCount()
     {
-        snackbar.setText(Convert.toString(list.size()) + "条数据");
+        int count = list.size();
+        if(list.size() == 1 && list.get(0) == headerItem)
+        {
+            count = 0;
+        }
+        snackbar.setText(Convert.toString(count) + "条数据");
         snackbar.show();
+    }
+
+    private void addItemDecoration()
+    {
+        if(!isAddedDecoration)
+        {
+            recyclerView.addItemDecoration(stickyRecyclerHeadersDecoration);
+        }
+
+        isAddedDecoration = true;
+    }
+
+    private void removeItemDecoration()
+    {
+        recyclerView.removeItemDecoration(stickyRecyclerHeadersDecoration);
+        isAddedDecoration = false;
     }
 
     private void readSp()
     {
         Root.requestReadPermission(currentSp.getAbsolutePath());
 
-        Document document = null;
+        Document document;
         try
         {
             document = new SAXReader().read(currentSp);
@@ -358,5 +458,6 @@ public class SpActivity extends AppCompatActivity
 
             list.add(new SpItem(type, name, value));
         }
+
     }
 }

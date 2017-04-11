@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/menu_id_fast_seek"
+        android:icon="@drawable/ic_fast_seek"
+        android:title="@string/seek_sp"
+        app:showAsAction="always"/>
+    <item
         android:id="@+id/menu_id_select_table"
         android:icon="@drawable/ic_select"
         android:title="@string/select_sp"
@@ -10,5 +15,10 @@
         android:id="@+id/menu_id_show_count"
         android:title="@string/show_item_count"
         android:icon="@drawable/ic_count"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/menu_id_seek"
+        android:icon="@drawable/ic_seek"
+        android:title="@string/seek_item"
         app:showAsAction="always"/>
 </menu>

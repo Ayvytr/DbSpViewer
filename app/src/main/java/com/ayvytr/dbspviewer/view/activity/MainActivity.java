@@ -1,5 +1,6 @@
 package com.ayvytr.dbspviewer.view.activity;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.ayvytr.dbspviewer.R;
+import com.ayvytr.dbspviewer.utils.Path;
 import com.ayvytr.dbspviewer.utils.Root;
 import com.ayvytr.easyandroid.Easy;
 import com.ayvytr.easyandroid.bean.AppInfo;
@@ -51,7 +53,6 @@ public class MainActivity extends AppCompatActivity
     @BindView(R.id.refreshLayout)
     SwipeRefreshLayout refreshLayout;
     private AppAdapter appAdapter;
-    private String spPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -231,7 +232,7 @@ public class MainActivity extends AppCompatActivity
                                         goToSpActivity(appInfo);
                                         break;
                                     case 1:
-                                        showSelectDbDialog(appInfo);
+                                        showSelectDbDialog(MainActivity.this, appInfo);
                                         break;
                                 }
                                 return true;
@@ -239,17 +240,16 @@ public class MainActivity extends AppCompatActivity
                         }).show();
     }
 
-    private void goToSpActivity(AppInfo appInfo)
+    void goToSpActivity(AppInfo appInfo)
     {
         Intent intent = new Intent(MainActivity.this, SpActivity.class);
         intent.putExtra(EXTRA_SP_APP_INFO, appInfo);
         startActivity(intent);
     }
 
-
-    private void showSelectDbDialog(AppInfo appInfo)
+    public static void showSelectDbDialog(final Activity activity, final AppInfo appInfo)
     {
-        String dbPath = getDbPath(appInfo.packageName);
+        String dbPath = Path.getDbPath(appInfo.packageName);
         Root.requestReadPermission(dbPath);
         final File[] files = FileTool.listFilesDislikeNamesNoCase(dbPath, "-journal");
         if(files == null || files.length == 0)
@@ -261,7 +261,7 @@ public class MainActivity extends AppCompatActivity
         final String[] names = FileTool.toFileNames(files);
         Arrays.sort(files);
         Arrays.sort(names);
-        new MaterialDialog.Builder(this)
+        new MaterialDialog.Builder(activity)
                 .title(R.string.select_db)
                 .items(names)
                 .alwaysCallSingleChoiceCallback()
@@ -271,17 +271,14 @@ public class MainActivity extends AppCompatActivity
                     public boolean onSelection(MaterialDialog dialog, View itemView, int which,
                                                CharSequence text)
                     {
-                        Intent intent = new Intent(MainActivity.this, DatabaseActivity.class);
+                        Intent intent = new Intent(activity, DatabaseActivity.class);
                         String path = files[which].getAbsolutePath();
                         intent.putExtra(EXTRA_DB_FILEPATH, path);
-                        startActivity(intent);
+                        intent.putExtra(EXTRA_SP_APP_INFO, appInfo);
+                        activity.startActivity(intent);
                         return true;
                     }
                 }).show();
     }
 
-    private String getDbPath(String packageName)
-    {
-        return "/data/data/" + packageName + "/databases";
-    }
 }

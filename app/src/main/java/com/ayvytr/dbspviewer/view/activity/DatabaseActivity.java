@@ -1,5 +1,6 @@
 package com.ayvytr.dbspviewer.view.activity;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -23,6 +24,7 @@ import com.ayvytr.dbspviewer.bean.DbItem;
 import com.ayvytr.dbspviewer.utils.Root;
 import com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView;
 import com.ayvytr.dbspviewer.view.custom.CustomTextView;
+import com.ayvytr.easyandroid.bean.AppInfo;
 import com.ayvytr.easyandroid.tools.Convert;
 import com.ayvytr.easyandroid.tools.withcontext.DensityTool;
 import com.ayvytr.easyandroid.tools.withcontext.ResTool;
@@ -45,6 +47,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 import static com.ayvytr.dbspviewer.view.activity.MainActivity.EXTRA_DB_FILEPATH;
+import static com.ayvytr.dbspviewer.view.activity.MainActivity.EXTRA_SP_APP_INFO;
 
 public class DatabaseActivity extends AppCompatActivity
 {
@@ -69,8 +72,11 @@ public class DatabaseActivity extends AppCompatActivity
     private int maxItemWidth;
     private Snackbar snackbar;
     private int screenWidth;
-    private String[] columnNames;
+    private AppInfo appInfo;
+    private DbItem headerItem;
+
     private StickyRecyclerHeadersDecoration stickyRecyclerHeadersDecoration;
+    private boolean isAddedDecoration = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -83,9 +89,15 @@ public class DatabaseActivity extends AppCompatActivity
 
     private void init()
     {
+        initExtra();
         initView();
-        path = getIntent().getStringExtra(EXTRA_DB_FILEPATH);
         getTables();
+    }
+
+    private void initExtra()
+    {
+        path = getIntent().getStringExtra(EXTRA_DB_FILEPATH);
+        appInfo = getIntent().getParcelableExtra(EXTRA_SP_APP_INFO);
     }
 
     private void initView()
@@ -100,7 +112,7 @@ public class DatabaseActivity extends AppCompatActivity
         dbItemAdapter = new DbItemAdapter();
         recyclerView.setAdapter(dbItemAdapter);
         stickyRecyclerHeadersDecoration = new StickyRecyclerHeadersDecoration(dbItemAdapter);
-        recyclerView.addItemDecoration(stickyRecyclerHeadersDecoration);
+        addItemDecoration();
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener()
         {
             @Override
@@ -109,6 +121,22 @@ public class DatabaseActivity extends AppCompatActivity
                 dbItemAdapter.update();
             }
         });
+    }
+
+    private void addItemDecoration()
+    {
+        if(!isAddedDecoration)
+        {
+            recyclerView.addItemDecoration(stickyRecyclerHeadersDecoration);
+        }
+
+        isAddedDecoration = true;
+    }
+
+    private void removeItemDecoration()
+    {
+        recyclerView.removeItemDecoration(stickyRecyclerHeadersDecoration);
+        isAddedDecoration = false;
     }
 
     @Override
@@ -129,14 +157,62 @@ public class DatabaseActivity extends AppCompatActivity
             case R.id.menu_id_show_count:
                 showItemCount();
                 return true;
+            case R.id.menu_id_seek:
+                seekListItem();
+                break;
+            case R.id.menu_id_fast_seek:
+                fastSeek();
+                break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void fastSeek()
+    {
+        Intent intent = new Intent(this, SpActivity.class);
+        intent.putExtra(EXTRA_SP_APP_INFO, appInfo);
+        startActivity(intent);
+    }
+
+    private void seekListItem()
+    {
+        if(list.isEmpty())
+        {
+            showNoItemMsg();
+            return;
+        }
+        ArrayList<Integer> items = new ArrayList<>();
+        for(int i = 0; i < list.size(); i++)
+        {
+            items.set(i, i + 1);
+        }
+        new MaterialDialog.Builder(this)
+                .title(R.string.seek_item)
+                .items(items)
+                .alwaysCallSingleChoiceCallback()
+                .itemsCallbackSingleChoice(0, new MaterialDialog.ListCallbackSingleChoice()
+                {
+                    @Override
+                    public boolean onSelection(MaterialDialog dialog, View itemView, int which,
+                                               CharSequence text)
+                    {
+                        recyclerView.scrollToPosition(which);
+                        return true;
+                    }
+                }).show();
+    }
+
+    private void showNoItemMsg()
+    {
+        snackbar.setText(R.string.no_db_items);
+        snackbar.show();
     }
 
     @Override
     protected void onDestroy()
     {
         Root.cancelReadDbPermission(path);
+        list.clear();
         super.onDestroy();
     }
 
@@ -191,16 +267,15 @@ public class DatabaseActivity extends AppCompatActivity
     private void readTable()
     {
         Cursor cursor = db.query(currentTable, null, null, null, null, null, null);
-        if(cursor.getCount() == 0)
-        {
-            return;
-        }
 
         list.clear();
 
         int columnCount = cursor.getColumnCount();
-        columnNames = cursor.getColumnNames();
         itemsWidth = new int[columnCount];
+
+        //防止列名显示不全，需要进行文字长度测量
+        headerItem = new DbItem(cursor.getColumnNames());
+        measureItemWidth(headerItem);
 
         while(cursor.moveToNext())
         {
@@ -213,13 +288,33 @@ public class DatabaseActivity extends AppCompatActivity
             list.add(dbItem);
             measureItemWidth(dbItem);
         }
+        cursor.close();
 
         checkIfNeedGravity();
     }
 
+    private void checkItemDecoration()
+    {
+        //如果是空表，显示表列名列表
+        if(list.isEmpty())
+        {
+            list.add(headerItem);
+            removeItemDecoration();
+        }
+        else
+        {
+            addItemDecoration();
+        }
+    }
+
     private void showItemCount()
     {
-        snackbar.setText(Convert.toString(list.size()) + "条数据");
+        int count = list.size();
+        if(list.size() == 1 && list.get(0) == headerItem)
+        {
+            count = 0;
+        }
+        snackbar.setText(Convert.toString(count) + "条数据");
         snackbar.show();
     }
 
@@ -228,7 +323,7 @@ public class DatabaseActivity extends AppCompatActivity
         snackbar = Snackbar
                 .make(getWindow().getDecorView(), Convert.toString(list.size()) + "条数据",
                         Snackbar.LENGTH_LONG);
-        snackbar.setAction(R.string.close, new View.OnClickListener()
+        snackbar.setAction(R.string.confirm, new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
@@ -354,8 +449,8 @@ public class DatabaseActivity extends AppCompatActivity
                           @Override
                           public void onNext(List<DbItem> value)
                           {
+                              checkItemDecoration();
                               notifyDataSetChanged();
-                              refreshLayout.setRefreshing(false);
                           }
 
                           @Override
@@ -367,6 +462,7 @@ public class DatabaseActivity extends AppCompatActivity
                           public void onComplete()
                           {
                               showItemCount();
+                              refreshLayout.setRefreshing(false);
                           }
                       });
         }
@@ -388,7 +484,15 @@ public class DatabaseActivity extends AppCompatActivity
                 view.setMinimumWidth(screenWidth);
 
                 CustomTextView tvIndex = new CustomTextView(view.getContext());
-                tvIndex.setText(Convert.toString(position + 1));
+                if(position == 0 && dbItem == headerItem)
+                {
+                    tvIndex.setText(R.string.index);
+                }
+                else
+                {
+                    tvIndex.setText(Convert.toString(position + 1));
+                }
+
                 tvIndex.setWidth(DensityTool.dp2px(60));
                 tvIndex.setBackgroundColor(Color.WHITE);
                 tvIndex.setBackgroundResource(R.drawable.tv_bg);
@@ -443,10 +547,10 @@ public class DatabaseActivity extends AppCompatActivity
                         new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                                 ViewGroup.LayoutParams.MATCH_PARENT));
 
-                for(int i = 0; i < columnNames.length; i++)
+                for(int i = 0; i < headerItem.values.length; i++)
                 {
                     CustomHeaderTextView tv = new CustomHeaderTextView(view.getContext());
-                    tv.setText(columnNames[i]);
+                    tv.setText(headerItem.values[i]);
                     tv.setWidth(itemsWidth[i] + DensityTool.dp2px(20));
                     if(needGravity)
                     {

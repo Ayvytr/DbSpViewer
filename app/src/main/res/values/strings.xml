@@ -7,7 +7,7 @@
     <string name="select_db">选择DB文件</string>
     <string name="select_table">选择表</string>
     <string name="no_databases">抱歉，没有数据库文件！</string>
-    <string name="close">关闭</string>
+    <string name="confirm">确定</string>
     <string name="empty_table">空的数据表</string>
     <string name="show_item_count">显示条目数量</string>
     <string name="no_sps">抱歉，没有Sp文件！</string>
@@ -17,4 +17,8 @@
     <string name="key">Key</string>
     <string name="value">Value</string>
     <string name="select_sp">选择Sp文件</string>
+    <string name="seek_item">条目跳转</string>
+    <string name="seek_sp">快速跳转到Sp</string>
+    <string name="no_sp_items">没有Sp条目！</string>
+    <string name="no_db_items">没有Db条目！</string>
 </resources>
