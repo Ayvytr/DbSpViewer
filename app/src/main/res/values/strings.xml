@@ -21,4 +21,8 @@
     <string name="seek_sp">快速跳转到Sp</string>
     <string name="no_sp_items">没有Sp条目！</string>
     <string name="no_db_items">没有Db条目！</string>
+    <string name="select_field_copy">选择条目复制</string>
+    <string name="copy_item">复制这个条目</string>
+    <string name="copied_item">已复制这个条目</string>
+    <string name="copied_field">已复制这个字段值</string>
 </resources>

@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.ayvytr.dbspviewer.R;
 import com.ayvytr.dbspviewer.bean.DbItem;
@@ -26,9 +28,11 @@ import com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView;
 import com.ayvytr.dbspviewer.view.custom.CustomTextView;
 import com.ayvytr.easyandroid.bean.AppInfo;
 import com.ayvytr.easyandroid.tools.Convert;
+import com.ayvytr.easyandroid.tools.withcontext.ClipboardTool;
 import com.ayvytr.easyandroid.tools.withcontext.DensityTool;
 import com.ayvytr.easyandroid.tools.withcontext.ResTool;
 import com.ayvytr.easyandroid.tools.withcontext.ScreenTool;
+import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 
@@ -578,35 +582,64 @@ public class DatabaseActivity extends AppCompatActivity
         }
     }
 
-    private void onShowItemInfo(DbItem dbItem, int position, boolean isHeader)
+    private void onShowItemInfo(final DbItem dbItem, int position, boolean isHeader)
     {
+        String title;
+        final String content;
         if(isHeader)
         {
-            showHeaderInfo();
+            title = "表头信息";
+            content = headerItem.toString();
         }
         else
         {
-            showItemInfo(dbItem, position);
+            title = "第" + Convert.toString(position + 1) + "条条目信息";
+            content = dbItem.toString(headerItem);
         }
-    }
 
-    private void showHeaderInfo()
-    {
-        String title = "表头信息";
-        String content = headerItem.toString();
         new MaterialDialog.Builder(this)
                 .title(title)
                 .content(content)
+                .neutralText(R.string.select_field_copy)
+                .negativeText(R.string.copy_item)
+                .positiveText(R.string.confirm)
+                .onNeutral(new MaterialDialog.SingleButtonCallback()
+                {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which)
+                    {
+                        selectFieldCopy(dbItem);
+                    }
+                })
+                .onNegative(new MaterialDialog.SingleButtonCallback()
+                {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which)
+                    {
+                        ClipboardTool.setText(content);
+                        ToastTool.show(R.string.copied_item);
+                    }
+                })
                 .show();
     }
 
-    private void showItemInfo(DbItem dbItem, int position)
+    private void selectFieldCopy(final DbItem dbItem)
     {
-        String title = "第" + Convert.toString(position + 1) + "条条目信息";
-        String content = dbItem.toString(headerItem);
         new MaterialDialog.Builder(this)
-                .title(title)
-                .content(content)
-                .show();
+                .title(R.string.copy_item)
+                .items(dbItem.values)
+                .alwaysCallSingleChoiceCallback()
+                .itemsCallbackSingleChoice(0, new MaterialDialog.ListCallbackSingleChoice()
+                {
+                    @Override
+                    public boolean onSelection(MaterialDialog dialog, View itemView, int which,
+                                               CharSequence text)
+                    {
+                        ClipboardTool.setText(dbItem.values[which]);
+                        ToastTool.show(R.string.copied_field);
+                        return true;
+                    }
+                }).show();
     }
+
 }
