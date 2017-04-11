@@ -3,17 +3,22 @@ package com.ayvytr.dbspviewer.view.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.ayvytr.dbspviewer.R;
 import com.ayvytr.dbspviewer.utils.Path;
@@ -40,6 +45,7 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity
@@ -52,6 +58,9 @@ public class MainActivity extends AppCompatActivity
     @BindView(R.id.refreshLayout)
     SwipeRefreshLayout refreshLayout;
     private AppAdapter appAdapter;
+
+    private int currentFilterType;
+    private int currentSortType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -78,6 +87,93 @@ public class MainActivity extends AppCompatActivity
         }
 
         initView();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch(item.getItemId())
+        {
+            case R.id.menu_id_help:
+                showHelpInfo();
+                return true;
+            case R.id.menu_id_filter:
+                filterApplications();
+                break;
+            case R.id.menu_id_sort:
+                sortApplications();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void sortApplications()
+    {
+        new MaterialDialog.Builder(this)
+                .title(R.string.sort_applications)
+                .items(R.array.sort_items)
+                .alwaysCallSingleChoiceCallback()
+                .itemsCallbackSingleChoice(currentSortType,
+                        new MaterialDialog.ListCallbackSingleChoice()
+                        {
+                            @Override
+                            public boolean onSelection(MaterialDialog dialog, View itemView,
+                                                       int which,
+                                                       CharSequence text)
+                            {
+                                currentSortType = which;
+                                appAdapter.onSortApplications();
+                                return true;
+                            }
+                        }).show();
+    }
+
+    private void filterApplications()
+    {
+        new MaterialDialog.Builder(this)
+                .title(R.string.filter_applications)
+                .items(R.array.filter_items)
+                .alwaysCallSingleChoiceCallback()
+                .itemsCallbackSingleChoice(currentFilterType,
+                        new MaterialDialog.ListCallbackSingleChoice()
+                        {
+                            @Override
+                            public boolean onSelection(MaterialDialog dialog, View itemView,
+                                                       int which,
+                                                       CharSequence text)
+                            {
+                                currentFilterType = which;
+                                appAdapter.update();
+                                return true;
+                            }
+                        }).show();
+    }
+
+    private void showHelpInfo()
+    {
+        new MaterialDialog.Builder(this)
+                .title(R.string.help)
+                .content(R.string.help_content)
+                .neutralText(R.string.goto_author_s_github)
+                .positiveText(R.string.confirm)
+                .onNeutral(new MaterialDialog.SingleButtonCallback()
+                {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which)
+                    {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse("https://github.com/ayvytr"));
+                        startActivity(intent);
+                    }
+                })
+                .show();
     }
 
     private void initView()
@@ -123,6 +219,22 @@ public class MainActivity extends AppCompatActivity
 
         public void update()
         {
+            switch(currentFilterType)
+            {
+                case 0:
+                    updateAll();
+                    break;
+                case 1:
+                    update(true);
+                    break;
+                case 2:
+                    update(false);
+                    break;
+            }
+        }
+
+        private void updateAll()
+        {
             Observable.create(new ObservableOnSubscribe<List<AppInfo>>()
             {
                 @Override
@@ -149,14 +261,70 @@ public class MainActivity extends AppCompatActivity
                           public void onNext(List<AppInfo> value)
                           {
                               list.addAll(value);
-                              Collections.sort(list, new Comparator<AppInfo>()
+                              onSortApplications();
+                          }
+
+                          @Override
+                          public void onError(Throwable e)
+                          {
+
+                          }
+
+                          @Override
+                          public void onComplete()
+                          {
+                              notifyDataSetChanged();
+                              refreshLayout.setRefreshing(false);
+                          }
+                      });
+        }
+
+        private void onSortApplications()
+        {
+            Collections.sort(list, new Comparator<AppInfo>()
+            {
+                @Override
+                public int compare(AppInfo o1, AppInfo o2)
+                {
+                    return currentSortType == 0 ? o1.label
+                            .compareTo(o2.label) : o1.packageName
+                            .compareTo(o2.packageName);
+                }
+            });
+        }
+
+        public void update(final boolean isSystemApplication)
+        {
+            List<AppInfo> installedAppsInfo = Packages.getInstalledAppsInfo();
+            Observable.fromIterable(installedAppsInfo)
+                      .filter(new Predicate<AppInfo>()
+                      {
+                          @Override
+                          public boolean test(AppInfo appInfo) throws Exception
+                          {
+                              return appInfo.isSystemApp == isSystemApplication;
+                          }
+                      })
+                      .observeOn(AndroidSchedulers.mainThread())
+                      .subscribeOn(Schedulers.io()).buffer(installedAppsInfo.size())
+                      .subscribe(new Observer<List<AppInfo>>()
+                      {
+                          @Override
+                          public void onSubscribe(Disposable d)
+                          {
+                              refreshLayout.setRefreshing(true);
+                              if(!list.isEmpty())
                               {
-                                  @Override
-                                  public int compare(AppInfo o1, AppInfo o2)
-                                  {
-                                      return o1.label.compareTo(o2.label);
-                                  }
-                              });
+                                  list.clear();
+                                  notifyDataSetChanged();
+                              }
+                          }
+
+                          @Override
+                          public void onNext(List<AppInfo> value)
+                          {
+                              list.addAll(value);
+                              onSortApplications();
                           }
 
                           @Override

@@ -204,7 +204,7 @@ public class SpActivity extends AppCompatActivity
 
     private void seekListItem()
     {
-        if(list.isEmpty())
+        if(list.isEmpty() || list.get(0) == headerItem)
         {
             showNoItemMsg();
             return;

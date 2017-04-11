@@ -4,4 +4,13 @@
         <item>@string/sp</item>
         <item>@string/db</item>
     </string-array>
+    <string-array name="filter_items">
+        <item>@string/all_applications</item>
+        <item>@string/system_applications</item>
+        <item>@string/other_applications</item>
+    </string-array>
+    <string-array name="sort_items">
+        <item>@string/sort_by_label</item>
+        <item>@string/sort_by_package_name</item>
+    </string-array>
 </resources>

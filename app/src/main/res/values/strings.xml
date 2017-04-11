@@ -25,4 +25,16 @@
     <string name="copy_item">复制这个条目</string>
     <string name="copied_item">已复制这个条目</string>
     <string name="copied_field">已复制这个字段值</string>
+    <string name="help">帮助</string>
+    <string name="help_content">帮助信息\n\n1.程序作者：Ayvytr\n2.程序要正常使用，需要授予Root权限\n3.应用仅作为查看所选应用的Sp或者DB数据，当前版本不会对原有数据进行任何修改，请放心使用</string>
+    <string name="goto_author_s_github">去看作者的GitHub</string>
+    <string name="filter">筛选应用</string>
+    <string name="filter_applications">筛选应用</string>
+    <string name="all_applications">所有应用</string>
+    <string name="system_applications">系统应用</string>
+    <string name="other_applications">其他应用</string>
+    <string name="sort">排序</string>
+    <string name="sort_applications">应用排序</string>
+    <string name="sort_by_label">通过应用名</string>
+    <string name="sort_by_package_name">通过包名</string>
 </resources>
