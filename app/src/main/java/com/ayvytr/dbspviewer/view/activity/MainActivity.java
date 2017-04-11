@@ -74,19 +74,25 @@ public class MainActivity extends AppCompatActivity
     private void init()
     {
         Easy.getDefault().init(this);
+        initView();
+    }
+
+    private boolean cannotAccess()
+    {
         if(!RootManager.getInstance().hasRooted())
         {
             ToastTool.show(R.string.no_root_permission);
-            return;
+            return true;
         }
 
         boolean hasPermission = RootManager.getInstance().obtainPermission();
         if(!hasPermission)
         {
             ToastTool.show(R.string.get_root_permission_failed);
+            return true;
         }
 
-        initView();
+        return false;
     }
 
     @Override
@@ -380,6 +386,11 @@ public class MainActivity extends AppCompatActivity
 
     private void showSwitchBrowseDialog(final AppInfo appInfo)
     {
+        if(cannotAccess())
+        {
+            return;
+        }
+
         new MaterialDialog.Builder(MainActivity.this)
                 .items(R.array.select_which)
                 .alwaysCallSingleChoiceCallback()
