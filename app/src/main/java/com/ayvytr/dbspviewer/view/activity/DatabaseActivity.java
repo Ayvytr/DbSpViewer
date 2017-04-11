@@ -21,7 +21,7 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.ayvytr.dbspviewer.R;
 import com.ayvytr.dbspviewer.bean.DbItem;
 import com.ayvytr.dbspviewer.utils.Root;
-import com.ayvytr.dbspviewer.view.custom.CustomHeaderView;
+import com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView;
 import com.ayvytr.dbspviewer.view.custom.CustomTextView;
 import com.ayvytr.easyandroid.tools.Convert;
 import com.ayvytr.easyandroid.tools.withcontext.DensityTool;
@@ -436,7 +436,7 @@ public class DatabaseActivity extends AppCompatActivity
                 view.removeAllViews();
                 view.setMinimumWidth(screenWidth);
 
-                CustomHeaderView tvIndex = new CustomHeaderView(view.getContext());
+                CustomHeaderTextView tvIndex = new CustomHeaderTextView(view.getContext());
                 tvIndex.setText("Index");
                 tvIndex.setWidth(DensityTool.dp2px(60));
                 view.addView(tvIndex,
@@ -445,7 +445,7 @@ public class DatabaseActivity extends AppCompatActivity
 
                 for(int i = 0; i < columnNames.length; i++)
                 {
-                    CustomHeaderView tv = new CustomHeaderView(view.getContext());
+                    CustomHeaderTextView tv = new CustomHeaderTextView(view.getContext());
                     tv.setText(columnNames[i]);
                     tv.setWidth(itemsWidth[i] + DensityTool.dp2px(20));
                     if(needGravity)

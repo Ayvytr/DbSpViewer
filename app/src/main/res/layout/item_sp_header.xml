@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:background="@drawable/tv_bg_header"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/_50dp"
+    android:orientation="horizontal">
+
+    <com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView
+        android:id="@+id/tvIndex"
+        android:layout_width="@dimen/_50dp"
+        android:layout_height="match_parent"
+        android:textColor="@color/colorAccent"/>
+
+    <com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView
+        android:id="@+id/tvType"
+        android:layout_width="@dimen/_60dp"
+        android:layout_height="match_parent"/>
+
+    <com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView
+        android:id="@+id/tvKey"
+        android:layout_width="@dimen/_0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"/>
+
+    <com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView
+        android:id="@+id/tvValue"
+        android:layout_width="@dimen/_0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"/>
+
+</LinearLayout>

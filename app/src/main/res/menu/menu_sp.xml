@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_id_select_table"
+        android:icon="@drawable/ic_select"
+        android:title="@string/select_sp"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/menu_id_show_count"
+        android:title="@string/show_item_count"
+        android:icon="@drawable/ic_count"
+        app:showAsAction="always"/>
+</menu>

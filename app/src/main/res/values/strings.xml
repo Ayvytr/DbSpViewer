@@ -6,8 +6,15 @@
     <string name="sp">Shared Preferences</string>
     <string name="select_db">选择DB文件</string>
     <string name="select_table">选择表</string>
-    <string name="no_databases">抱歉，没有数据库文件</string>
+    <string name="no_databases">抱歉，没有数据库文件！</string>
     <string name="close">关闭</string>
     <string name="empty_table">空的数据表</string>
     <string name="show_item_count">显示条目数量</string>
+    <string name="no_sps">抱歉，没有Sp文件！</string>
+    <string name="read_sp_error">抱歉，读取Sp文件出错！</string>
+    <string name="index">Index</string>
+    <string name="type">Type</string>
+    <string name="key">Key</string>
+    <string name="value">Value</string>
+    <string name="select_sp">选择Sp文件</string>
 </resources>

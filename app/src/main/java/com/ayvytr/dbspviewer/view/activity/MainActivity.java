@@ -44,12 +44,14 @@ import io.reactivex.schedulers.Schedulers;
 public class MainActivity extends AppCompatActivity
 {
     public static final String EXTRA_DB_FILEPATH = "extra_db_filepath";
+    public static final String EXTRA_SP_APP_INFO = "extra_sp_app_info";
 
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
     @BindView(R.id.refreshLayout)
     SwipeRefreshLayout refreshLayout;
     private AppAdapter appAdapter;
+    private String spPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -226,7 +228,7 @@ public class MainActivity extends AppCompatActivity
                                 switch(which)
                                 {
                                     case 0:
-                                        ToastTool.show(R.string.sp);
+                                        goToSpActivity(appInfo);
                                         break;
                                     case 1:
                                         showSelectDbDialog(appInfo);
@@ -236,6 +238,14 @@ public class MainActivity extends AppCompatActivity
                             }
                         }).show();
     }
+
+    private void goToSpActivity(AppInfo appInfo)
+    {
+        Intent intent = new Intent(MainActivity.this, SpActivity.class);
+        intent.putExtra(EXTRA_SP_APP_INFO, appInfo);
+        startActivity(intent);
+    }
+
 
     private void showSelectDbDialog(AppInfo appInfo)
     {

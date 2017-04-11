@@ -21,6 +21,8 @@
         </activity>
         <activity android:name=".view.activity.DatabaseActivity">
         </activity>
+        <activity android:name=".view.activity.SpActivity">
+        </activity>
     </application>
 
 </manifest>

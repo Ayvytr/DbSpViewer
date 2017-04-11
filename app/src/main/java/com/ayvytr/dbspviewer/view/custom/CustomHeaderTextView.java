@@ -15,19 +15,19 @@ import com.ayvytr.easyandroid.view.custom.LeftCenterGravityTextView;
  * @author davidwang
  */
 
-public class CustomHeaderView extends LeftCenterGravityTextView
+public class CustomHeaderTextView extends LeftCenterGravityTextView
 {
-    public CustomHeaderView(Context context)
+    public CustomHeaderTextView(Context context)
     {
         this(context, null);
     }
 
-    public CustomHeaderView(Context context, AttributeSet attrs)
+    public CustomHeaderTextView(Context context, AttributeSet attrs)
     {
         this(context, attrs, 0);
     }
 
-    public CustomHeaderView(Context context, AttributeSet attrs, int defStyleAttr)
+    public CustomHeaderTextView(Context context, AttributeSet attrs, int defStyleAttr)
     {
         super(context, attrs, defStyleAttr);
         setMaxLines(1);
