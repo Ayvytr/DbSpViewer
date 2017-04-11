@@ -484,7 +484,8 @@ public class DatabaseActivity extends AppCompatActivity
                 view.setMinimumWidth(screenWidth);
 
                 CustomTextView tvIndex = new CustomTextView(view.getContext());
-                if(position == 0 && dbItem == headerItem)
+                final boolean isHeader = position == 0 && dbItem == headerItem;
+                if(isHeader)
                 {
                     tvIndex.setText(R.string.index);
                 }
@@ -522,6 +523,14 @@ public class DatabaseActivity extends AppCompatActivity
 
                 stickyRecyclerHeadersDecoration.invalidateHeaders();
 
+                view.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        onShowItemInfo(dbItem, position, isHeader);
+                    }
+                });
             }
         }
 
@@ -567,5 +576,37 @@ public class DatabaseActivity extends AppCompatActivity
                 }
             }
         }
+    }
+
+    private void onShowItemInfo(DbItem dbItem, int position, boolean isHeader)
+    {
+        if(isHeader)
+        {
+            showHeaderInfo();
+        }
+        else
+        {
+            showItemInfo(dbItem, position);
+        }
+    }
+
+    private void showHeaderInfo()
+    {
+        String title = "表头信息";
+        String content = headerItem.toString();
+        new MaterialDialog.Builder(this)
+                .title(title)
+                .content(content)
+                .show();
+    }
+
+    private void showItemInfo(DbItem dbItem, int position)
+    {
+        String title = "第" + Convert.toString(position + 1) + "条条目信息";
+        String content = dbItem.toString(headerItem);
+        new MaterialDialog.Builder(this)
+                .title(title)
+                .content(content)
+                .show();
     }
 }

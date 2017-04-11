@@ -331,17 +331,20 @@ public class SpActivity extends AppCompatActivity
             CustomTextView tvKey;
             @BindView(R.id.tvValue)
             CustomTextView tvValue;
+            private View view;
 
             public Vh(View view)
             {
                 super(view);
+                this.view = view;
                 ButterKnife.bind(this, view);
             }
 
-            public void bind(int position)
+            public void bind(final int position)
             {
-                SpItem spItem = list.get(position);
-                if(spItem == headerItem)
+                final SpItem spItem = list.get(position);
+                final boolean isHeader = position == 0 && spItem == headerItem;
+                if(isHeader)
                 {
                     tvIndex.setText(R.string.index);
                 }
@@ -355,6 +358,15 @@ public class SpActivity extends AppCompatActivity
                 tvValue.setText(spItem.value);
 
                 stickyRecyclerHeadersDecoration.invalidateHeaders();
+
+                view.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        onShowItemInfo(spItem, position, isHeader);
+                    }
+                });
             }
         }
 
@@ -459,5 +471,37 @@ public class SpActivity extends AppCompatActivity
             list.add(new SpItem(type, name, value));
         }
 
+    }
+
+    private void onShowItemInfo(SpItem spItem, int position, boolean isHeader)
+    {
+        if(isHeader)
+        {
+            showHeaderInfo();
+        }
+        else
+        {
+            showItemInfo(spItem, position);
+        }
+    }
+
+    private void showHeaderInfo()
+    {
+        String title = "表头信息";
+        String content = headerItem.toString();
+        new MaterialDialog.Builder(this)
+                .title(title)
+                .content(content)
+                .show();
+    }
+
+    private void showItemInfo(SpItem spItem, int position)
+    {
+        String title = "第" + Convert.toString(position + 1) + "条条目信息";
+        String content = spItem.toString(headerItem);
+        new MaterialDialog.Builder(this)
+                .title(title)
+                .content(content)
+                .show();
     }
 }

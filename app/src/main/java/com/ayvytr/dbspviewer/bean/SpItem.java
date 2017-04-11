@@ -23,4 +23,27 @@ public class SpItem
     public SpItem()
     {
     }
+
+    @Override
+    public String toString()
+    {
+        return type + "\n" + key + "\n" + value + "\n";
+    }
+
+    public String toString(SpItem headerItem)
+    {
+        StringBuffer sb = new StringBuffer(headerItem.type);
+        sb.append(":");
+        sb.append(type);
+        sb.append("\n");
+        sb.append(headerItem.key);
+        sb.append(":");
+        sb.append(key);
+        sb.append("\n");
+        sb.append(headerItem.value);
+        sb.append(":");
+        sb.append(value);
+        sb.append("\n");
+        return sb.toString();
+    }
 }
