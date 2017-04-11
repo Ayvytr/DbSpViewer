@@ -5,7 +5,6 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 
 import com.ayvytr.dbspviewer.R;
-import com.ayvytr.easyandroid.tools.withcontext.ResTool;
 import com.ayvytr.easyandroid.view.custom.LeftCenterGravityTextView;
 
 /**
@@ -32,7 +31,7 @@ public class CustomHeaderTextView extends LeftCenterGravityTextView
         super(context, attrs, defStyleAttr);
         setMaxLines(1);
         setEllipsize(TextUtils.TruncateAt.END);
-        setTextColor(ResTool.getColor(R.color.colorAccent));
+        setTextColor(getResources().getColor(R.color.colorAccent, null));
         setBackgroundResource(R.drawable.tv_bg_header);
         setPadding(20, 0, 0, 0);
     }

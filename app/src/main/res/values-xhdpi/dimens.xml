@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="side_length">40dp</dimen>
+    <dimen name="margin_length">2dp</dimen>
+    <dimen name="img_side_length">38dp</dimen>
+</resources>
