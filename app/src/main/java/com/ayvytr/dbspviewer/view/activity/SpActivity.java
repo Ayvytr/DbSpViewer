@@ -128,7 +128,7 @@ public class SpActivity extends AppCompatActivity
         Arrays.sort(files);
         Arrays.sort(names);
         new MaterialDialog.Builder(this)
-                .title(R.string.select_db)
+                .title(R.string.select_sp)
                 .items(names)
                 .alwaysCallSingleChoiceCallback()
                 .itemsCallbackSingleChoice(currentIndex,
@@ -151,7 +151,7 @@ public class SpActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
-        getMenuInflater().inflate(R.menu.menu_database, menu);
+        getMenuInflater().inflate(R.menu.menu_sp, menu);
         return true;
     }
 
