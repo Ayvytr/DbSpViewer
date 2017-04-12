@@ -1,0 +1,1 @@
+jarsigner -verbose -keystore ayvytr.jks -signedjar dbspviewer_release.apk dbspviewer.apk "ayvytr"

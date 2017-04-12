@@ -89,7 +89,7 @@ public class SpActivity extends AppCompatActivity
 
     private void initView()
     {
-        setTitle(R.string.db);
+        setTitle(R.string.sp);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         spItemAdapter = new SpItemAdapter();
