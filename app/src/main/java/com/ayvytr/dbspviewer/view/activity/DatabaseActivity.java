@@ -188,7 +188,7 @@ public class DatabaseActivity extends AppCompatActivity
         ArrayList<Integer> items = new ArrayList<>();
         for(int i = 0; i < list.size(); i++)
         {
-            items.set(i, i + 1);
+            items.add(i + 1);
         }
         new MaterialDialog.Builder(this)
                 .title(R.string.seek_item)
