@@ -13,6 +13,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".view.activity.MainActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
             android:launchMode="singleTop"
             android:theme="@style/AppWelcome">
             <intent-filter>
@@ -23,11 +24,28 @@
         </activity>
         <activity
             android:name=".view.activity.DatabaseActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
             android:launchMode="singleTop">
         </activity>
         <activity
             android:name=".view.activity.SpActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
             android:launchMode="singleTop">
+        </activity>
+
+        <activity
+            android:name=".view.activity.ExternalDatabaseActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:launchMode="singleTop">
+        </activity>
+        <activity
+            android:name=".view.activity.ExternalSpActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:launchMode="singleTop">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+            </intent-filter>
         </activity>
     </application>
 
