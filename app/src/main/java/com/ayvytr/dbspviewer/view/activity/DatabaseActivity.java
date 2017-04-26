@@ -23,7 +23,6 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.ayvytr.dbspviewer.R;
 import com.ayvytr.dbspviewer.bean.DbItem;
-import com.ayvytr.dbspviewer.utils.Root;
 import com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView;
 import com.ayvytr.dbspviewer.view.custom.CustomTextView;
 import com.ayvytr.easyandroid.bean.AppInfo;
@@ -33,6 +32,7 @@ import com.ayvytr.easyandroid.tools.withcontext.DensityTool;
 import com.ayvytr.easyandroid.tools.withcontext.ResTool;
 import com.ayvytr.easyandroid.tools.withcontext.ScreenTool;
 import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
+import com.ayvytr.root.Roots;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 
@@ -215,14 +215,14 @@ public class DatabaseActivity extends AppCompatActivity
     @Override
     protected void onDestroy()
     {
-        Root.cancelReadDbPermission(path);
+        Roots.THIS.cancelReadDbWithJournalPermission(path);
         list.clear();
         super.onDestroy();
     }
 
     private void getTables()
     {
-        Root.requestReadDbPermission(path);
+        Roots.THIS.requestReadDbWithJournalPermission(path);
 
         db = SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.OPEN_READONLY);
         Cursor cursor = db

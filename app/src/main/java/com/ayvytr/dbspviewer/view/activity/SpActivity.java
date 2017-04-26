@@ -18,7 +18,6 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.ayvytr.dbspviewer.R;
 import com.ayvytr.dbspviewer.bean.SpItem;
 import com.ayvytr.dbspviewer.utils.Path;
-import com.ayvytr.dbspviewer.utils.Root;
 import com.ayvytr.dbspviewer.view.custom.CustomHeaderTextView;
 import com.ayvytr.dbspviewer.view.custom.CustomTextView;
 import com.ayvytr.easyandroid.bean.AppInfo;
@@ -26,6 +25,7 @@ import com.ayvytr.easyandroid.tools.Convert;
 import com.ayvytr.easyandroid.tools.FileTool;
 import com.ayvytr.easyandroid.tools.withcontext.ClipboardTool;
 import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
+import com.ayvytr.root.Roots;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 
@@ -112,7 +112,7 @@ public class SpActivity extends AppCompatActivity
     {
         if(currentSp != null)
         {
-            Root.cancelReadPermission(currentSp.getAbsolutePath());
+            Roots.THIS.cancelReadPermission(currentSp.getAbsolutePath());
         }
         list.clear();
         super.onDestroy();
@@ -136,7 +136,7 @@ public class SpActivity extends AppCompatActivity
     private void selectSpFile()
     {
         String spPath = Path.getSpPath(appInfo.packageName);
-        Root.requestReadPermission(spPath);
+        Roots.THIS.requestReadPermisson(spPath);
 
         final File[] files = FileTool.listFiles(spPath);
         if(files == null || files.length == 0)
@@ -442,7 +442,7 @@ public class SpActivity extends AppCompatActivity
 
     private void readSp()
     {
-        Root.requestReadPermission(currentSp.getAbsolutePath());
+        Roots.THIS.requestReadPermisson(currentSp.getAbsolutePath());
 
         Document document;
         try

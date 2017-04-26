@@ -22,13 +22,12 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.ayvytr.dbspviewer.R;
 import com.ayvytr.dbspviewer.utils.Path;
-import com.ayvytr.dbspviewer.utils.Root;
 import com.ayvytr.easyandroid.Easy;
 import com.ayvytr.easyandroid.bean.AppInfo;
 import com.ayvytr.easyandroid.tools.FileTool;
 import com.ayvytr.easyandroid.tools.withcontext.Packages;
 import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
-import com.chrisplus.rootmanager.RootManager;
+import com.ayvytr.root.Roots;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -80,13 +79,13 @@ public class MainActivity extends AppCompatActivity
 
     private boolean cannotAccess()
     {
-        if(!RootManager.getInstance().hasRooted())
+        if(!Roots.get().hasRooted())
         {
             ToastTool.show(R.string.no_root_permission);
             return true;
         }
 
-        boolean hasPermission = RootManager.getInstance().obtainPermission();
+        boolean hasPermission = Roots.get().requestRootPermission();
         if(!hasPermission)
         {
             ToastTool.show(R.string.get_root_permission_failed);
@@ -427,7 +426,7 @@ public class MainActivity extends AppCompatActivity
     public static void showSelectDbDialog(final Activity activity, final AppInfo appInfo)
     {
         String dbPath = Path.getDbPath(appInfo.packageName);
-        Root.requestReadPermission(dbPath);
+        Roots.get().requestReadPermisson(dbPath);
         final File[] files = FileTool.listFilesDislikeNamesNoCase(dbPath, "-journal");
         if(files == null || files.length == 0)
         {
