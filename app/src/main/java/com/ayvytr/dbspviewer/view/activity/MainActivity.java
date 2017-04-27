@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.ayvytr.dbspviewer.R;
+import com.ayvytr.dbspviewer.diff.AppCallback;
 import com.ayvytr.dbspviewer.utils.Path;
 import com.ayvytr.easyandroid.Easy;
 import com.ayvytr.easyandroid.bean.AppInfo;
@@ -44,6 +46,7 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
@@ -135,7 +138,7 @@ public class MainActivity extends AppCompatActivity
                                                        CharSequence text)
                             {
                                 currentSortType = which;
-                                appAdapter.onSortApplications();
+                                onSortApplications(appAdapter.list);
                                 return true;
                             }
                         }).show();
@@ -200,6 +203,21 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
+    private void onSortApplications(List<AppInfo> list)
+    {
+        Collections.sort(list, new Comparator<AppInfo>()
+        {
+            @Override
+            public int compare(AppInfo o1, AppInfo o2)
+            {
+                return currentSortType == 0 ? o1.label
+                        .compareTo(o2.label) : o1.packageName
+                        .compareTo(o2.packageName);
+            }
+        });
+    }
+
+
     public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Vh>
     {
         private List<AppInfo> list = new ArrayList<>();
@@ -241,63 +259,57 @@ public class MainActivity extends AppCompatActivity
 
         private void updateAll()
         {
+            refreshLayout.setRefreshing(true);
             Observable.create(new ObservableOnSubscribe<List<AppInfo>>()
             {
                 @Override
                 public void subscribe(ObservableEmitter<List<AppInfo>> e) throws Exception
                 {
                     e.onNext(Packages.getInstalledAppsInfo());
-                    e.onComplete();
                 }
             }).observeOn(AndroidSchedulers.mainThread()).subscribeOn(Schedulers.io())
-                      .subscribe(new Observer<List<AppInfo>>()
-                      {
+                      .subscribe(new Consumer<List<AppInfo>>() {
                           @Override
-                          public void onSubscribe(Disposable d)
+                          public void accept(List<AppInfo> value) throws Exception
                           {
-                              refreshLayout.setRefreshing(true);
-                              if(!list.isEmpty())
-                              {
-                                  list.clear();
-                                  notifyDataSetChanged();
-                              }
-                          }
-
-                          @Override
-                          public void onNext(List<AppInfo> value)
-                          {
+                              onSortApplications(value);
+                              DiffUtil.DiffResult diffResult = DiffUtil
+                                      .calculateDiff(new AppCallback(list, value), true);
+                              diffResult.dispatchUpdatesTo(appAdapter);
                               list.addAll(value);
-                              onSortApplications();
-                          }
-
-                          @Override
-                          public void onError(Throwable e)
-                          {
-
-                          }
-
-                          @Override
-                          public void onComplete()
-                          {
-                              notifyDataSetChanged();
-                              refreshLayout.setRefreshing(false);
                           }
                       });
+//                      .subscribe(new Observer<List<AppInfo>>()
+//                      {
+//                          @Override
+//                          public void onSubscribe(Disposable d)
+//                          {
+//                              refreshLayout.setRefreshing(true);
+//                          }
+//
+//                          @Override
+//                          public void onNext(List<AppInfo> value)
+//                          {
+//                              onSortApplications();
+//                              DiffUtil.DiffResult diffResult = DiffUtil
+//                                      .calculateDiff(new AppCallback(list, value), true);
+//                              diffResult.dispatchUpdatesTo(appAdapter);
+//                              list.addAll(value);
+//                          }
+//
+//                          @Override
+//                          public void onError(Throwable e)
+//                          {
+//
+//                          }
+//
+//                          @Override
+//                          public void onComplete()
+//                          {
+//                          }
+//                      });
         }
 
-        private void onSortApplications()
-        {
-            Collections.sort(list, new Comparator<AppInfo>()
-            {
-                @Override
-                public int compare(AppInfo o1, AppInfo o2)
-                {
-                    return currentSortType == 0 ? o1.label
-                            .compareTo(o2.label) : o1.packageName
-                            .compareTo(o2.packageName);
-                }
-            });
-        }
 
         public void update(final boolean isSystemApplication)
         {
@@ -330,7 +342,7 @@ public class MainActivity extends AppCompatActivity
                           public void onNext(List<AppInfo> value)
                           {
                               list.addAll(value);
-                              onSortApplications();
+                              onSortApplications(list);
                           }
 
                           @Override
