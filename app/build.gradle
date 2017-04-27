@@ -1,14 +1,18 @@
 apply plugin: 'com.android.application'
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
 
     signingConfigs {
-        debug {
-        }
         release {
-            storeFile file('../.gradle/SpringWoods.jks')
+            keyAlias properties.getProperty('ALIAS')
+            keyPassword properties.getProperty('PASSWORD')
+            storePassword properties.getProperty('STORE_PWD')
+            storeFile file('../.gradle/ayvytr.jks')
         }
     }
     defaultConfig {
@@ -16,7 +20,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 25
         versionCode 20170001
-        versionName "1.0.0"
+        versionName "1.0.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -60,7 +64,6 @@ dependencies {
     compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
     compile 'io.reactivex.rxjava2:rxjava:2.0.1'
     compile 'com.afollestad.material-dialogs:core:0.9.4.2'
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.timehop.stickyheadersrecyclerview:library:0.4.3@aar'
     testCompile 'junit:junit:4.12'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
