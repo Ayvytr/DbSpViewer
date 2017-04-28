@@ -32,9 +32,9 @@ import com.ayvytr.easyandroid.tools.withcontext.DensityTool;
 import com.ayvytr.easyandroid.tools.withcontext.ResTool;
 import com.ayvytr.easyandroid.tools.withcontext.ScreenTool;
 import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
+import com.ayvytr.prettyitemdecoration.header.StickyHeaderAdapter;
+import com.ayvytr.prettyitemdecoration.header.StickyHeaderItemDecoration;
 import com.ayvytr.root.Roots;
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,7 +79,7 @@ public class DatabaseActivity extends AppCompatActivity
     private AppInfo appInfo;
     private DbItem headerItem;
 
-    private StickyRecyclerHeadersDecoration stickyRecyclerHeadersDecoration;
+    private StickyHeaderItemDecoration stickyRecyclerHeadersDecoration;
     private boolean isAddedDecoration = false;
 
     @Override
@@ -115,7 +115,7 @@ public class DatabaseActivity extends AppCompatActivity
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         dbItemAdapter = new DbItemAdapter();
         recyclerView.setAdapter(dbItemAdapter);
-        stickyRecyclerHeadersDecoration = new StickyRecyclerHeadersDecoration(dbItemAdapter);
+        stickyRecyclerHeadersDecoration = new StickyHeaderItemDecoration(dbItemAdapter);
         addItemDecoration();
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener()
         {
@@ -383,7 +383,7 @@ public class DatabaseActivity extends AppCompatActivity
     }
 
     public class DbItemAdapter extends RecyclerView.Adapter<DbItemAdapter.Vh>
-            implements StickyRecyclerHeadersAdapter<DbItemAdapter.HeaderVh>
+            implements StickyHeaderAdapter<DbItemAdapter.HeaderVh>
     {
         @Override
         public Vh onCreateViewHolder(ViewGroup parent, int viewType)
@@ -400,14 +400,15 @@ public class DatabaseActivity extends AppCompatActivity
         }
 
         @Override
-        public long getHeaderId(int position)
+        public int getId(int position)
         {
             return 0;
         }
 
         @Override
-        public HeaderVh onCreateHeaderViewHolder(ViewGroup parent)
+        public HeaderVh onCreateHeaderViewHolder(RecyclerView parent)
         {
+
             return new HeaderVh(LayoutInflater.from(parent.getContext())
                                               .inflate(R.layout.item_db, parent,
                                                       false));
@@ -525,7 +526,7 @@ public class DatabaseActivity extends AppCompatActivity
                     }
                 }
 
-                stickyRecyclerHeadersDecoration.invalidateHeaders();
+                stickyRecyclerHeadersDecoration.invalidate();
 
                 view.setOnClickListener(new View.OnClickListener()
                 {

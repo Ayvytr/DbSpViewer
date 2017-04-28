@@ -25,9 +25,9 @@ import com.ayvytr.easyandroid.tools.Convert;
 import com.ayvytr.easyandroid.tools.FileTool;
 import com.ayvytr.easyandroid.tools.withcontext.ClipboardTool;
 import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
+import com.ayvytr.prettyitemdecoration.header.StickyHeaderAdapter;
+import com.ayvytr.prettyitemdecoration.header.StickyHeaderItemDecoration;
 import com.ayvytr.root.Roots;
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -61,7 +61,7 @@ public class SpActivity extends AppCompatActivity
     private AppInfo appInfo;
     private int currentIndex;
     private File currentSp;
-    private StickyRecyclerHeadersDecoration stickyRecyclerHeadersDecoration;
+    private StickyHeaderItemDecoration stickyRecyclerHeadersDecoration;
     private SpItemAdapter spItemAdapter;
 
     private List<SpItem> list = new ArrayList<>();
@@ -94,7 +94,7 @@ public class SpActivity extends AppCompatActivity
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         spItemAdapter = new SpItemAdapter();
         recyclerView.setAdapter(spItemAdapter);
-        stickyRecyclerHeadersDecoration = new StickyRecyclerHeadersDecoration(spItemAdapter);
+        stickyRecyclerHeadersDecoration = new StickyHeaderItemDecoration(spItemAdapter);
         addItemDecoration();
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener()
         {
@@ -237,7 +237,7 @@ public class SpActivity extends AppCompatActivity
     }
 
     public class SpItemAdapter extends RecyclerView.Adapter<SpItemAdapter.Vh>
-            implements StickyRecyclerHeadersAdapter<SpItemAdapter.SpHeaderVh>
+            implements StickyHeaderAdapter<SpItemAdapter.SpHeaderVh>
     {
         @Override
         public Vh onCreateViewHolder(ViewGroup parent, int viewType)
@@ -253,13 +253,13 @@ public class SpActivity extends AppCompatActivity
         }
 
         @Override
-        public long getHeaderId(int position)
+        public int getId(int position)
         {
             return 0;
         }
 
         @Override
-        public SpHeaderVh onCreateHeaderViewHolder(ViewGroup parent)
+        public SpHeaderVh onCreateHeaderViewHolder(RecyclerView parent)
         {
             return new SpHeaderVh(LayoutInflater.from(parent.getContext())
                                                 .inflate(R.layout.item_sp_header, parent, false));
@@ -360,7 +360,7 @@ public class SpActivity extends AppCompatActivity
                 tvKey.setText(spItem.key);
                 tvValue.setText(spItem.value);
 
-                stickyRecyclerHeadersDecoration.invalidateHeaders();
+                stickyRecyclerHeadersDecoration.invalidate();
 
                 view.setOnClickListener(new View.OnClickListener()
                 {
