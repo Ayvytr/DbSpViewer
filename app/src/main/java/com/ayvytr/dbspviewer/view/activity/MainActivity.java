@@ -41,12 +41,10 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
@@ -138,7 +136,7 @@ public class MainActivity extends AppCompatActivity
                                                        CharSequence text)
                             {
                                 currentSortType = which;
-                                onSortApplications(appAdapter.list);
+                                appAdapter.update();
                                 return true;
                             }
                         }).show();
@@ -243,121 +241,83 @@ public class MainActivity extends AppCompatActivity
 
         public void update()
         {
-            switch(currentFilterType)
-            {
-                case 0:
-                    updateAll();
-                    break;
-                case 1:
-                    update(true);
-                    break;
-                case 2:
-                    update(false);
-                    break;
-            }
-        }
-
-        private void updateAll()
-        {
             refreshLayout.setRefreshing(true);
-            Observable.create(new ObservableOnSubscribe<List<AppInfo>>()
-            {
-                @Override
-                public void subscribe(ObservableEmitter<List<AppInfo>> e) throws Exception
-                {
-                    e.onNext(Packages.getInstalledAppsInfo());
-                }
-            }).observeOn(AndroidSchedulers.mainThread()).subscribeOn(Schedulers.io())
-                      .subscribe(new Consumer<List<AppInfo>>() {
-                          @Override
-                          public void accept(List<AppInfo> value) throws Exception
-                          {
-                              onSortApplications(value);
-                              DiffUtil.DiffResult diffResult = DiffUtil
-                                      .calculateDiff(new AppCallback(list, value), true);
-                              diffResult.dispatchUpdatesTo(appAdapter);
-                              list.addAll(value);
-                          }
-                      });
-//                      .subscribe(new Observer<List<AppInfo>>()
-//                      {
-//                          @Override
-//                          public void onSubscribe(Disposable d)
-//                          {
-//                              refreshLayout.setRefreshing(true);
-//                          }
-//
-//                          @Override
-//                          public void onNext(List<AppInfo> value)
-//                          {
-//                              onSortApplications();
-//                              DiffUtil.DiffResult diffResult = DiffUtil
-//                                      .calculateDiff(new AppCallback(list, value), true);
-//                              diffResult.dispatchUpdatesTo(appAdapter);
-//                              list.addAll(value);
-//                          }
-//
-//                          @Override
-//                          public void onError(Throwable e)
-//                          {
-//
-//                          }
-//
-//                          @Override
-//                          public void onComplete()
-//                          {
-//                          }
-//                      });
-        }
-
-
-        public void update(final boolean isSystemApplication)
-        {
-            List<AppInfo> installedAppsInfo = Packages.getInstalledAppsInfo();
-            Observable.fromIterable(installedAppsInfo)
+            Observable.fromIterable(Packages.getInstalledAppsInfo())
                       .filter(new Predicate<AppInfo>()
                       {
                           @Override
                           public boolean test(AppInfo appInfo) throws Exception
                           {
-                              return appInfo.isSystemApp == isSystemApplication;
-                          }
-                      })
-                      .observeOn(AndroidSchedulers.mainThread())
-                      .subscribeOn(Schedulers.io()).buffer(installedAppsInfo.size())
-                      .subscribe(new Observer<List<AppInfo>>()
-                      {
-                          @Override
-                          public void onSubscribe(Disposable d)
-                          {
-                              refreshLayout.setRefreshing(true);
-                              if(!list.isEmpty())
+                              switch(currentFilterType)
                               {
-                                  list.clear();
-                                  notifyDataSetChanged();
+                                  case 1:
+                                      return appInfo.isSystemApp;
+                                  case 2:
+                                      return !appInfo.isSystemApp;
+                                  default:
+                                      return true;
                               }
                           }
-
-                          @Override
-                          public void onNext(List<AppInfo> value)
-                          {
-                              list.addAll(value);
-                              onSortApplications(list);
-                          }
-
-                          @Override
-                          public void onError(Throwable e)
-                          {
-
-                          }
-
-                          @Override
-                          public void onComplete()
-                          {
-                              notifyDataSetChanged();
-                              refreshLayout.setRefreshing(false);
-                          }
-                      });
+                      }).observeOn(AndroidSchedulers.mainThread())
+                      .subscribeOn(Schedulers.io())
+                      .buffer(1000)
+                      .flatMap(new Function<List<AppInfo>, Observable<DiffUtil.DiffResult>>()
+                               {
+                                   @Override
+                                   public Observable<DiffUtil.DiffResult> apply(
+                                           final List<AppInfo> value) throws Exception
+                                   {
+                                       return new Observable<DiffUtil.DiffResult>()
+                                       {
+                                           @Override
+                                           protected void subscribeActual(
+                                                   Observer<? super DiffUtil.DiffResult> observer)
+                                           {
+                                               onSortApplications(value);
+                                               DiffUtil.DiffResult diffResult = DiffUtil
+                                                       .calculateDiff(new AppCallback(list, value), true);
+                                               observer.onNext(diffResult);
+                                               list = value;
+                                               observer.onComplete();
+                                           }
+                                       };
+                                   }
+                               }).subscribe(new Consumer<DiffUtil.DiffResult>() {
+                @Override
+                public void accept(DiffUtil.DiffResult diffResult) throws Exception
+                {
+                    diffResult.dispatchUpdatesTo(appAdapter);
+                    refreshLayout.setRefreshing(false);
+                    recyclerView.scrollToPosition(0);
+                }
+            });
+//                      }).subscribe(new Observer<DiffUtil.DiffResult>()
+//            {
+//                @Override
+//                public void onSubscribe(Disposable d)
+//                {
+//                    refreshLayout.setRefreshing(true);
+//                }
+//
+//                @Override
+//                public void onNext(DiffUtil.DiffResult value)
+//                {
+//                    value.dispatchUpdatesTo(appAdapter);
+//                }
+//
+//                @Override
+//                public void onError(Throwable e)
+//                {
+//                    refreshLayout.setRefreshing(false);
+//                }
+//
+//                @Override
+//                public void onComplete()
+//                {
+//                    refreshLayout.setRefreshing(false);
+//                    recyclerView.scrollToPosition(0);
+//                }
+//            });
         }
 
         public class Vh extends RecyclerView.ViewHolder
