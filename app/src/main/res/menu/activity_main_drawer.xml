@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Communicate"
+        android:enabled="true">
+        <menu>
+            <item
+                android:id="@+id/nav_help"
+                android:icon="@android:drawable/ic_menu_help"
+                android:title="@string/help"/>
+            <item
+                android:id="@+id/nav_view"
+                android:icon="@android:drawable/ic_menu_view"
+                android:title="@string/browse_ayvytr_s_github"/>
+        </menu>
+    </item>
+</menu>

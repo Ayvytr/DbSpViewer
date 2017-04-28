@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorPrimary"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <ImageView
+        android:layout_width="@dimen/_80dp"
+        android:layout_height="@dimen/_80dp"
+        android:layout_margin="@dimen/_20dp"
+        android:src="@drawable/launcher_transparent"/>
+
+    <com.ayvytr.easyandroid.view.custom.CenterGravityTextView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_50dp"
+        android:text="@string/author_info"
+        android:textColor="@color/white"
+        android:textSize="@dimen/_18sp"/>
+
+    <com.ayvytr.easyandroid.view.custom.CenterGravityTextView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_50dp"
+        android:text="@string/author_s_github"
+        android:textColor="@color/white"
+        android:textSize="@dimen/_18sp"/>
+</LinearLayout>

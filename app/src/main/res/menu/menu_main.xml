@@ -12,8 +12,8 @@
         android:title="@string/sort"
         app:showAsAction="always"/>
     <item
-        android:id="@+id/menu_id_help"
-        android:icon="@drawable/ic_menu_help"
-        android:title="@string/help"
+        android:id="@+id/menu_id_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="@string/search"
         app:showAsAction="always"/>
 </menu>

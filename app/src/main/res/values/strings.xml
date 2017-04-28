@@ -37,4 +37,10 @@
     <string name="sort_applications">应用排序</string>
     <string name="sort_by_label">通过应用名</string>
     <string name="sort_by_package_name">通过包名</string>
+    <string name="navigation_drawer_open">Open</string>
+    <string name="navigation_drawer_close">Close</string>
+    <string name="author_info">Ayvytr</string>
+    <string name="author_s_github">https://github.com/ayvytr</string>
+    <string name="browse_ayvytr_s_github">去看Ayvytr的GitHub</string>
+    <string name="search">搜索</string>
 </resources>
