@@ -289,7 +289,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        searchView.setSuggestions(list.toArray(new String[0]));
+        searchView.setSuggestions(strs.toArray(new String[strs.size()]));
     }
 
     private void onSortApplications(List<AppInfo> list)
