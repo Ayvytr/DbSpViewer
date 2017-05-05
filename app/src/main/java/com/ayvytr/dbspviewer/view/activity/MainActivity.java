@@ -248,25 +248,56 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean onQueryTextChange(String newText)
             {
-                fillSuggestions(newText);
+//                fillSuggestions(newText);
                 return false;
             }
         });
 
-//        searchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener()
-//        {
-//            @Override
-//            public void onSearchViewShown()
-//            {
-//                //Do some magic
-//            }
-//
-//            @Override
-//            public void onSearchViewClosed()
-//            {
-//                //Do some magic
-//            }
-//        });
+        searchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener()
+        {
+            @Override
+            public void onSearchViewShown()
+            {
+                //Do some magic
+            }
+
+            @Override
+            public void onSearchViewClosed()
+            {
+                //Do some magic
+            }
+        });
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        if(searchView.isSearchOpen())
+        {
+            searchView.closeSearch();
+            return;
+        }
+
+        if(drawerLayout.isDrawerOpen(GravityCompat.START))
+        {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return;
+        }
+
+        super.onBackPressed();
+    }
+
+    private void fillSuggestions()
+    {
+        List<AppInfo> list = appAdapter.getList();
+        List<String> strs = new ArrayList<>();
+        for(AppInfo appInfo : list)
+        {
+            strs.add(appInfo.packageName);
+        }
+
+        String[] array = strs.toArray(new String[0]);
+        searchView.setSuggestions(array);
     }
 
     private void fillSuggestions(String text)
@@ -388,9 +419,9 @@ public class MainActivity extends AppCompatActivity
                                       onSortApplications(value);
                                       DiffUtil.DiffResult diffResult = DiffUtil
                                               .calculateDiff(new AppCallback(list, value), true);
-                                      observer.onNext(diffResult);
                                       list = value;
-                                      observer.onComplete();
+                                      fillSuggestions();
+                                      observer.onNext(diffResult);
                                   }
                               };
                           }
@@ -399,8 +430,8 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void accept(DiffUtil.DiffResult diffResult) throws Exception
                 {
-                    diffResult.dispatchUpdatesTo(appAdapter);
                     refreshLayout.setRefreshing(false);
+                    diffResult.dispatchUpdatesTo(appAdapter);
                     recyclerView.scrollToPosition(0);
                 }
             });
