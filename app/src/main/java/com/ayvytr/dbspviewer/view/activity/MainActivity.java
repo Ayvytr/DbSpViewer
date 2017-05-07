@@ -34,6 +34,7 @@ import com.ayvytr.easyandroid.bean.AppInfo;
 import com.ayvytr.easyandroid.tools.FileTool;
 import com.ayvytr.easyandroid.tools.withcontext.Packages;
 import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
+import com.ayvytr.logger.L;
 import com.ayvytr.root.Roots;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
@@ -47,7 +48,8 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
-import io.reactivex.Observer;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -91,6 +93,7 @@ public class MainActivity extends AppCompatActivity
     {
         Easy.getDefault().init(this);
         initView();
+
     }
 
     private boolean cannotAccess()
@@ -287,42 +290,6 @@ public class MainActivity extends AppCompatActivity
         super.onBackPressed();
     }
 
-    private void fillSuggestions()
-    {
-        List<AppInfo> list = appAdapter.getList();
-        List<String> strs = new ArrayList<>();
-        for(AppInfo appInfo : list)
-        {
-            strs.add(appInfo.packageName);
-        }
-
-        String[] array = strs.toArray(new String[0]);
-        searchView.setSuggestions(array);
-    }
-
-    private void fillSuggestions(String text)
-    {
-        List<AppInfo> list = appAdapter.getList();
-        List<String> strs = new ArrayList<>();
-        for(AppInfo appInfo : list)
-        {
-            if(appInfo.label != null && appInfo.label.contains(text))
-            {
-                strs.add(appInfo.label);
-            }
-            if(appInfo.className != null && appInfo.className.contains(text))
-            {
-                strs.add(appInfo.className);
-            }
-            if(appInfo.packageName != null && appInfo.packageName.contains(text))
-            {
-                strs.add(appInfo.packageName);
-            }
-        }
-
-        searchView.setSuggestions(strs.toArray(new String[strs.size()]));
-    }
-
     private void onSortApplications(List<AppInfo> list)
     {
         Collections.sort(list, new Comparator<AppInfo>()
@@ -358,11 +325,6 @@ public class MainActivity extends AppCompatActivity
     {
         private List<AppInfo> list = new ArrayList<>();
 
-        public List<AppInfo> getList()
-        {
-            return list;
-        }
-
         @Override
         public Vh onCreateViewHolder(ViewGroup parent, int viewType)
         {
@@ -385,56 +347,68 @@ public class MainActivity extends AppCompatActivity
         public void update()
         {
             refreshLayout.setRefreshing(true);
-            Observable.fromIterable(Packages.getInstalledAppsInfo())
-                      .filter(new Predicate<AppInfo>()
-                      {
-                          @Override
-                          public boolean test(AppInfo appInfo) throws Exception
-                          {
-                              switch(currentFilterType)
-                              {
-                                  case 1:
-                                      return appInfo.isSystemApp;
-                                  case 2:
-                                      return !appInfo.isSystemApp;
-                                  default:
-                                      return true;
-                              }
-                          }
-                      }).observeOn(AndroidSchedulers.mainThread())
-                      .subscribeOn(Schedulers.io())
-                      .buffer(1000)
-                      .flatMap(new Function<List<AppInfo>, Observable<DiffUtil.DiffResult>>()
-                      {
-                          @Override
-                          public Observable<DiffUtil.DiffResult> apply(
-                                  final List<AppInfo> value) throws Exception
-                          {
-                              return new Observable<DiffUtil.DiffResult>()
-                              {
-                                  @Override
-                                  protected void subscribeActual(
-                                          Observer<? super DiffUtil.DiffResult> observer)
-                                  {
-                                      onSortApplications(value);
-                                      DiffUtil.DiffResult diffResult = DiffUtil
-                                              .calculateDiff(new AppCallback(list, value), true);
-                                      list = value;
-                                      fillSuggestions();
-                                      observer.onNext(diffResult);
-                                  }
-                              };
-                          }
-                      }).subscribe(new Consumer<DiffUtil.DiffResult>()
-            {
-                @Override
-                public void accept(DiffUtil.DiffResult diffResult) throws Exception
-                {
-                    refreshLayout.setRefreshing(false);
-                    diffResult.dispatchUpdatesTo(appAdapter);
-                    recyclerView.scrollToPosition(0);
-                }
-            });
+
+            Observable
+                    .create(new ObservableOnSubscribe<List<AppInfo>>()
+                    {
+                        @Override
+                        public void subscribe(ObservableEmitter<List<AppInfo>> e) throws Exception
+                        {
+                            List<AppInfo> list = Packages.getInstalledAppsInfo();
+                            e.onNext(list);
+                            e.onComplete();
+                        }
+                    }).subscribeOn(Schedulers.io())
+                    .flatMap(new Function<List<AppInfo>, Observable<AppInfo>>()
+                    {
+                        @Override
+                        public Observable<AppInfo> apply(final List<AppInfo> appInfos) throws
+                                                                                       Exception
+                        {
+                            return Observable.fromIterable(appInfos);
+                        }
+                    })
+                    .filter(new Predicate<AppInfo>()
+                    {
+                        @Override
+                        public boolean test(AppInfo appInfo) throws Exception
+                        {
+                            switch(currentFilterType)
+                            {
+                                case 1:
+                                    return appInfo.isSystemApp;
+                                case 2:
+                                    return !appInfo.isSystemApp;
+                                default:
+                                    return true;
+                            }
+                        }
+                    })
+                    .toList()
+                    .map(new Function<List<AppInfo>, DiffUtil.DiffResult>()
+                    {
+                        @Override
+                        public DiffUtil.DiffResult apply(List<AppInfo> value) throws Exception
+                        {
+                            onSortApplications(value);
+                            DiffUtil.DiffResult diffResult = DiffUtil
+                                    .calculateDiff(new AppCallback(list, value), true);
+                            list = value;
+                            return diffResult;
+                        }
+                    })
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Consumer<DiffUtil.DiffResult>()
+                    {
+                        @Override
+                        public void accept(DiffUtil.DiffResult diffResult) throws Exception
+                        {
+                            L.e();
+                            refreshLayout.setRefreshing(false);
+                            diffResult.dispatchUpdatesTo(appAdapter);
+                            recyclerView.scrollToPosition(0);
+                        }
+                    });
         }
 
         public class Vh extends RecyclerView.ViewHolder
