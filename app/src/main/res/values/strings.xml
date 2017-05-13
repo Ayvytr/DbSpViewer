@@ -43,4 +43,6 @@
     <string name="author_s_github">https://github.com/ayvytr</string>
     <string name="browse_ayvytr_s_github">去看Ayvytr的GitHub</string>
     <string name="search">搜索</string>
+    <string name="searching_comment">正在搜索，点击\"返回\"还原App列表</string>
+    <string name="go_back">返回</string>
 </resources>

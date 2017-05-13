@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -35,6 +36,7 @@ import com.ayvytr.easyandroid.tools.FileTool;
 import com.ayvytr.easyandroid.tools.TextTool;
 import com.ayvytr.easyandroid.tools.withcontext.Packages;
 import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
+import com.ayvytr.logger.L;
 import com.ayvytr.root.Roots;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
@@ -78,6 +80,9 @@ public class MainActivity extends AppCompatActivity
     private int currentFilterType;
     private int currentSortType;
     private List<AppInfo> list;
+    private boolean isSearching;
+
+    private Snackbar snackbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -243,16 +248,35 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean onQueryTextSubmit(String query)
             {
+                isSearching = true;
+                snackbar.show();
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String text)
             {
-                appAdapter.update(text);
-                return true;
+                if(TextTool.notEmpty(text))
+                {
+                    appAdapter.update(text);
+                }
+                return false;
             }
         });
+
+        snackbar = Snackbar.make(getWindow().getDecorView(), R.string.searching_comment, Snackbar.LENGTH_INDEFINITE)
+                           .setAction(R.string.go_back, new View.OnClickListener()
+                           {
+                               @Override
+                               public void onClick(View v)
+                               {
+                                   if(isSearching)
+                                   {
+                                       appAdapter.update(null);
+                                       isSearching = false;
+                                   }
+                               }
+                           });
     }
 
     @Override
@@ -261,6 +285,13 @@ public class MainActivity extends AppCompatActivity
         if(searchView.isSearchOpen())
         {
             searchView.closeSearch();
+            return;
+        }
+
+        if(isSearching)
+        {
+            isSearching = false;
+            appAdapter.update(null);
             return;
         }
 
@@ -292,7 +323,8 @@ public class MainActivity extends AppCompatActivity
 
     public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Vh>
     {
-        private List<AppInfo> nList = new ArrayList<>();
+        private List<AppInfo> nList = new ArrayList<>(0);
+        private List<AppInfo> val;
 
         @Override
         public Vh onCreateViewHolder(ViewGroup parent, int viewType)
@@ -321,6 +353,7 @@ public class MainActivity extends AppCompatActivity
         public synchronized void update(final String key)
         {
             refreshLayout.setRefreshing(true);
+            L.e();
 
             Observable
                     .create(new ObservableOnSubscribe<List<AppInfo>>()
@@ -409,7 +442,7 @@ public class MainActivity extends AppCompatActivity
                         {
                             DiffUtil.DiffResult diffResult = DiffUtil
                                     .calculateDiff(new AppCallback(nList, value), true);
-                            nList = value;
+                            val = value;
                             return diffResult;
                         }
                     })
@@ -421,6 +454,8 @@ public class MainActivity extends AppCompatActivity
                         {
                             refreshLayout.setRefreshing(false);
                             diffResult.dispatchUpdatesTo(appAdapter);
+                            nList = val;
+                            val = null;
                             recyclerView.scrollToPosition(0);
                         }
                     });
