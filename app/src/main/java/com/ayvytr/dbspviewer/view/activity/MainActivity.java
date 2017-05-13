@@ -32,16 +32,15 @@ import com.ayvytr.dbspviewer.utils.Path;
 import com.ayvytr.easyandroid.Easy;
 import com.ayvytr.easyandroid.bean.AppInfo;
 import com.ayvytr.easyandroid.tools.FileTool;
+import com.ayvytr.easyandroid.tools.TextTool;
 import com.ayvytr.easyandroid.tools.withcontext.Packages;
 import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
-import com.ayvytr.logger.L;
 import com.ayvytr.root.Roots;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -78,6 +77,7 @@ public class MainActivity extends AppCompatActivity
 
     private int currentFilterType;
     private int currentSortType;
+    private List<AppInfo> list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -93,7 +93,6 @@ public class MainActivity extends AppCompatActivity
     {
         Easy.getDefault().init(this);
         initView();
-
     }
 
     private boolean cannotAccess()
@@ -157,7 +156,7 @@ public class MainActivity extends AppCompatActivity
                                                        CharSequence text)
                             {
                                 currentSortType = which;
-                                appAdapter.update();
+                                appAdapter.update(null);
                                 return true;
                             }
                         }).show();
@@ -178,7 +177,7 @@ public class MainActivity extends AppCompatActivity
                                                        CharSequence text)
                             {
                                 currentFilterType = which;
-                                appAdapter.update();
+                                appAdapter.update(null);
                                 return true;
                             }
                         }).show();
@@ -214,7 +213,7 @@ public class MainActivity extends AppCompatActivity
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         appAdapter = new AppAdapter();
         recyclerView.setAdapter(appAdapter);
-        appAdapter.update();
+        appAdapter.update(null);
         refreshLayout.setColorSchemeColors(Color.RED, Color.YELLOW, Color.GREEN, Color.BLUE,
                 Color.BLACK);
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener()
@@ -222,7 +221,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onRefresh()
             {
-                appAdapter.update();
+                appAdapter.update(null);
             }
         });
 
@@ -244,30 +243,14 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean onQueryTextSubmit(String query)
             {
-                ToastTool.show("搜索");
                 return false;
             }
 
             @Override
-            public boolean onQueryTextChange(String newText)
+            public boolean onQueryTextChange(String text)
             {
-//                fillSuggestions(newText);
-                return false;
-            }
-        });
-
-        searchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener()
-        {
-            @Override
-            public void onSearchViewShown()
-            {
-                //Do some magic
-            }
-
-            @Override
-            public void onSearchViewClosed()
-            {
-                //Do some magic
+                appAdapter.update(text);
+                return true;
             }
         });
     }
@@ -290,20 +273,6 @@ public class MainActivity extends AppCompatActivity
         super.onBackPressed();
     }
 
-    private void onSortApplications(List<AppInfo> list)
-    {
-        Collections.sort(list, new Comparator<AppInfo>()
-        {
-            @Override
-            public int compare(AppInfo o1, AppInfo o2)
-            {
-                return currentSortType == 0 ? o1.label
-                        .compareTo(o2.label) : o1.packageName
-                        .compareTo(o2.packageName);
-            }
-        });
-    }
-
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item)
     {
@@ -323,7 +292,7 @@ public class MainActivity extends AppCompatActivity
 
     public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Vh>
     {
-        private List<AppInfo> list = new ArrayList<>();
+        private List<AppInfo> nList = new ArrayList<>();
 
         @Override
         public Vh onCreateViewHolder(ViewGroup parent, int viewType)
@@ -341,10 +310,15 @@ public class MainActivity extends AppCompatActivity
         @Override
         public int getItemCount()
         {
-            return list.size();
+            return nList.size();
         }
 
-        public void update()
+        /**
+         * 获取应用列表并显示
+         *
+         * @param key 搜索时的关键字。其他场景为空
+         */
+        public synchronized void update(final String key)
         {
             refreshLayout.setRefreshing(true);
 
@@ -354,7 +328,11 @@ public class MainActivity extends AppCompatActivity
                         @Override
                         public void subscribe(ObservableEmitter<List<AppInfo>> e) throws Exception
                         {
-                            List<AppInfo> list = Packages.getInstalledAppsInfo();
+                            if(list == null)
+                            {
+                                list = Packages.getInstalledAppsInfo();
+                            }
+
                             e.onNext(list);
                             e.onComplete();
                         }
@@ -384,16 +362,54 @@ public class MainActivity extends AppCompatActivity
                             }
                         }
                     })
-                    .toList()
+                    .filter(new Predicate<AppInfo>()
+                    {
+                        @Override
+                        public boolean test(AppInfo appInfo) throws Exception
+                        {
+                            if(TextTool.isEmpty(key))
+                            {
+                                return true;
+                            }
+
+                            String lowerKey = key.toLowerCase();
+
+                            boolean isValid = false;
+                            if(TextTool.notEmpty(appInfo.label))
+                            {
+                                isValid = isValid || appInfo.label.toLowerCase().contains(lowerKey);
+                            }
+
+                            if(TextTool.notEmpty(appInfo.className))
+                            {
+                                isValid = isValid || appInfo.className.toLowerCase().contains(lowerKey);
+                            }
+
+                            if(TextTool.notEmpty(appInfo.packageName))
+                            {
+                                isValid = isValid || appInfo.packageName.toLowerCase().contains(lowerKey);
+                            }
+
+                            return isValid;
+                        }
+                    })
+                    .toSortedList(new Comparator<AppInfo>()
+                    {
+                        @Override
+                        public int compare(AppInfo o1, AppInfo o2)
+                        {
+                            return currentSortType == 0 ? o1.label.compareTo(o2.label) : o1.packageName
+                                    .compareTo(o2.packageName);
+                        }
+                    })
                     .map(new Function<List<AppInfo>, DiffUtil.DiffResult>()
                     {
                         @Override
                         public DiffUtil.DiffResult apply(List<AppInfo> value) throws Exception
                         {
-                            onSortApplications(value);
                             DiffUtil.DiffResult diffResult = DiffUtil
-                                    .calculateDiff(new AppCallback(list, value), true);
-                            list = value;
+                                    .calculateDiff(new AppCallback(nList, value), true);
+                            nList = value;
                             return diffResult;
                         }
                     })
@@ -403,7 +419,6 @@ public class MainActivity extends AppCompatActivity
                         @Override
                         public void accept(DiffUtil.DiffResult diffResult) throws Exception
                         {
-                            L.e();
                             refreshLayout.setRefreshing(false);
                             diffResult.dispatchUpdatesTo(appAdapter);
                             recyclerView.scrollToPosition(0);
@@ -430,9 +445,9 @@ public class MainActivity extends AppCompatActivity
 
             public void update(int position)
             {
-                final AppInfo appInfo = list.get(position);
+                final AppInfo appInfo = nList.get(position);
                 tvTitle.setText(appInfo.label);
-                iv.setImageBitmap(appInfo.icon);
+                iv.setImageDrawable(appInfo.getIcon());
                 tvPackageName.setText(appInfo.packageName);
 
                 view.setOnClickListener(new View.OnClickListener()
@@ -494,7 +509,6 @@ public class MainActivity extends AppCompatActivity
         if(files == null || files.length == 0)
         {
             ToastTool.show(R.string.no_databases);
-            return;
         }
 
         final String[] names = FileTool.toFileNames(files);
