@@ -36,7 +36,6 @@ import com.ayvytr.easyandroid.tools.FileTool;
 import com.ayvytr.easyandroid.tools.TextTool;
 import com.ayvytr.easyandroid.tools.withcontext.Packages;
 import com.ayvytr.easyandroid.tools.withcontext.ToastTool;
-import com.ayvytr.logger.L;
 import com.ayvytr.root.Roots;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
@@ -353,7 +352,6 @@ public class MainActivity extends AppCompatActivity
         public synchronized void update(final String key)
         {
             refreshLayout.setRefreshing(true);
-            L.e();
 
             Observable
                     .create(new ObservableOnSubscribe<List<AppInfo>>()
